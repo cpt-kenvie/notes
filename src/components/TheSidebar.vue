@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useToast } from 'vue-toastification'
 import ConfirmDialog from './ConfirmDialog.vue'
 
@@ -15,7 +15,7 @@ defineProps({
   }
 })
 
-const emit = defineEmits(['select-note', 'new-note', 'delete-note'])
+const emit = defineEmits(['select-note', 'new-note', 'delete-note', 'toggle-sidebar'])
 
 // 创建新笔记
 const handleNewNote = () => {
@@ -38,13 +38,32 @@ const handleDelete = async (event, note) => {
     toast.success("笔记已删除")
   }
 }
+
+// 切换侧边栏并保存状态
+const toggleSidebar = () => {
+  isOpen.value = !isOpen.value
+  localStorage.setItem('sidebarOpen', isOpen.value)
+  emit('toggle-sidebar', isOpen.value)
+}
+
+// 组件加载时恢复状态
+onMounted(() => {
+  const savedState = localStorage.getItem('sidebarOpen')
+  if (savedState !== null) {
+    isOpen.value = savedState === 'true'
+  }
+})
 </script>
 
 <template>
   <aside :class="['sidebar', { 'sidebar-closed': !isOpen }]">
     <ConfirmDialog ref="confirmDialog" />
-    <button class="toggle-btn" @click="isOpen = !isOpen">
-      {{ isOpen ? '←' : '→' }}
+    <button 
+      class="toggle-btn" 
+      @click="toggleSidebar"
+      :title="isOpen ? '收起侧边栏' : '展开侧边栏'"
+    >
+      <span class="toggle-icon">{{ isOpen ? '' : '' }}</span>
     </button>
     <div class="sidebar-content">
       <button class="new-note-btn" @click="handleNewNote">
@@ -89,27 +108,42 @@ const handleDelete = async (event, note) => {
   left: 0;
   top: var(--header-height);
   bottom: var(--footer-height);
-  transition: transform 0.3s ease;
+  transition: all 0.3s ease;
   z-index: 50;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
 }
 
 .sidebar-closed {
-  transform: translateX(calc(-1 * var(--sidebar-width) + 40px));
+  transform: translateX(calc(-1 * var(--sidebar-width)));
 }
 
 .toggle-btn {
   position: absolute;
-  right: -40px;
-  top: 50%;
+  right: -32px;
+  top: 10cap;
   transform: translateY(-50%);
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 44px;
   background-color: var(--primary-color);
   color: white;
   border: none;
-  border-radius: 0 4px 4px 0;
+  border-radius: 0 8px 8px 0;
   cursor: pointer;
-  display: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+}
+
+.toggle-btn:hover {
+  background-color: #1d4ed8;
+  width: 36px;
+}
+
+.toggle-icon {
+  font-size: 1.2rem;
+  line-height: 1;
 }
 
 .sidebar-content {
@@ -208,11 +242,18 @@ const handleDelete = async (event, note) => {
 
 @media (max-width: 768px) {
   .toggle-btn {
-    display: block;
+    display: flex;
+    width: 28px;
+    height: 48px;
+    right: -28px;
   }
   
   .sidebar {
     box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+  }
+
+  .sidebar-closed {
+    transform: translateX(calc(-1 * var(--sidebar-width)));
   }
 }
 

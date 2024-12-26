@@ -51,6 +51,12 @@ const handleDeleteNote = (note) => {
     currentNote.value = null
   }
 }
+
+const isSidebarOpen = ref(true)
+
+const handleSidebarToggle = (isOpen) => {
+  isSidebarOpen.value = isOpen
+}
 </script>
 
 <template>
@@ -62,10 +68,12 @@ const handleDeleteNote = (note) => {
         @select-note="handleNoteSelect"
         @new-note="handleNewNote"
         @delete-note="handleDeleteNote"
+        @toggle-sidebar="handleSidebarToggle"
       />
       <NoteEditor 
         v-if="currentNote"
         :note="currentNote"
+        :is-sidebar-open="isSidebarOpen"
         @update:note="loadNotes"
       />
     </div>

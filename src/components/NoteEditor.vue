@@ -76,6 +76,10 @@ const props = defineProps({
   note: {
     type: Object,
     required: true
+  },
+  isSidebarOpen: {
+    type: Boolean,
+    default: true
   }
 })
 
@@ -221,7 +225,6 @@ const handleChange = (v) => {
 <style scoped>
 .editor {
   flex: 1;
-  margin-left: var(--sidebar-width);
   padding: 2rem;
   padding-top: calc(var(--header-height) + 2rem);
   padding-bottom: calc(var(--footer-height) + 2rem);
@@ -229,7 +232,20 @@ const handleChange = (v) => {
   flex-direction: column;
   gap: 1.5rem;
   max-width: 1200px;
+  transition: all 0.3s ease;
   margin: 0 auto;
+}
+
+/* 当侧边栏打开时 */
+:deep(.sidebar:not(.sidebar-closed)) ~ .editor {
+  width: calc(100% - var(--sidebar-width));
+  margin-left: var(--sidebar-width);
+}
+
+/* 当侧边栏关闭时 */
+:deep(.sidebar.sidebar-closed) ~ .editor {
+  width: 100%;
+  margin-left: 0;
 }
 
 .editor-header {
@@ -282,9 +298,18 @@ const handleChange = (v) => {
 
 @media (max-width: 768px) {
   .editor {
-    margin-left: 40px;
     padding: 1rem;
     padding-top: calc(var(--header-height) + 1rem);
+  }
+  
+  :deep(.sidebar:not(.sidebar-closed)) ~ .editor {
+    width: calc(100% - 40px);
+    margin-left: 40px;
+  }
+  
+  :deep(.sidebar.sidebar-closed) ~ .editor {
+    width: 100%;
+    margin-left: 0;
   }
   
   .editor-header {
