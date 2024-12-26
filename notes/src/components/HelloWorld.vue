@@ -1,12 +1,13 @@
 <script setup>
 import { ref, provide } from 'vue'
-import { useToast } from 'vue-toastification'
+
 import TheHeader from './TheHeader.vue'
 import TheSidebar from './TheSidebar.vue'
 import NoteEditor from './NoteEditor.vue'
 import TheFooter from './TheFooter.vue'
-
+import { useToast } from 'vue-toastification'
 const toast = useToast()
+
 const currentNote = ref(null)
 const notes = ref([])
 

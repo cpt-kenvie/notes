@@ -1,5 +1,7 @@
+import { API_BASE_URL } from '../config/api'
+
 // 创建一个请求工具
-const request = async (url, options = {}) => {
+const request = async (endpoint, options = {}) => {
   const token = localStorage.getItem('token');
   
   const defaultHeaders = {
@@ -9,6 +11,8 @@ const request = async (url, options = {}) => {
   if (token) {
     defaultHeaders.Authorization = `Bearer ${token}`;
   }
+  
+  const url = `${API_BASE_URL}${endpoint}`;
   
   const response = await fetch(url, {
     ...options,
@@ -21,7 +25,6 @@ const request = async (url, options = {}) => {
   const data = await response.json();
   
   if (!response.ok) {
-    // token 过期或无效
     if (response.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('isLoggedIn');

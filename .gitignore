@@ -13,7 +13,7 @@ lerna-debug.log*
 
 /server/node_modules
 /server/.vscode
-.env
+/server/.env
 
 node_modules
 dist

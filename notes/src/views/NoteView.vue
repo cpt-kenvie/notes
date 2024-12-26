@@ -10,22 +10,22 @@
     </div>
     <TheFooter />
   </div>
+  <MessageToast ref="messageToast" />
 </template>
 
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useToast } from 'vue-toastification'
 import request from '../utils/request'
 import eventBus from '../utils/eventBus'
 import TheHeader from '../components/TheHeader.vue'
 import TheFooter from '../components/TheFooter.vue'
 import TheSidebar from '../components/TheSidebar.vue'
 import NoteEditor from '../components/NoteEditor.vue'
-
+import { useToast } from 'vue-toastification'
+const toast = useToast()
 const route = useRoute()
 const router = useRouter()
-const toast = useToast()
 
 const currentNote = ref({
   title: '',
@@ -37,7 +37,7 @@ const fetchNote = async () => {
   if (route.params.id === 'new') return
   
   try {
-    const response = await request(`http://localhost:3000/api/notes/${route.params.id}`)
+    const response = await request(`/api/notes/${route.params.id}`)
     currentNote.value = response.note
   } catch (error) {
     toast.error('获取笔记失败')
@@ -49,15 +49,16 @@ const fetchNote = async () => {
 const handleSave = async (note) => {
   try {
     if (route.params.id === 'new') {
-      await request('http://localhost:3000/api/notes', {
+      const response = await request('/api/notes', {
         method: 'POST',
         body: JSON.stringify(note)
       })
       toast.success('笔记已创建')
       eventBus.emit('notes-updated')
-      router.push('/')
+      // 更新路由到新创建的笔记
+      router.replace(`/notes/${response.note.id}`)
     } else {
-      await request(`http://localhost:3000/api/notes/${route.params.id}`, {
+      await request(`/api/notes/${route.params.id}`, {
         method: 'PUT',
         body: JSON.stringify(note)
       })
@@ -66,6 +67,8 @@ const handleSave = async (note) => {
     }
   } catch (error) {
     toast.error('保存失败')
+
+
   }
 }
 

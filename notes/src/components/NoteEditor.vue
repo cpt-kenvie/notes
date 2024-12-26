@@ -9,7 +9,7 @@ import breaks from '@bytemd/plugin-breaks'
 import 'bytemd/dist/index.css'
 import 'highlight.js/styles/github.css'
 import { useToast } from 'vue-toastification'
-
+const toast = useToast()
 // 中文本地化配置
 const locale = {
   write: '编辑',
@@ -97,10 +97,32 @@ const handleChange = (v) => {
 
 // 保存笔记
 const saveNote = () => {
+  if (!title.value.trim()) {
+    // messageToast.value?.show('请输入笔记标题', 'warning')
+    toast.error('请输入笔记标题')
+    return
+  }
+  
+  if (!content.value.trim()) {
+    // messageToast.value?.show('请输入笔记内容', 'warning')
+    toast.error('请输入笔记内容')
+    return
+  }
+
   emit('save', {
     title: title.value,
     content: content.value
   })
+}
+
+const handleImageUpload = async (files) => {
+  try {
+    // ... 上传代码
+    messageToast.value?.show('图片上传成功', 'success')
+    toast.success('请输入笔记内容')
+  } catch (error) {
+    messageToast.value?.show('图片上传失败', 'error')
+  }
 }
 </script>
 
@@ -131,6 +153,7 @@ const saveNote = () => {
       />
     </div>
   </div>
+  <MessageToast ref="messageToast" />
 </template>
 
 <style>

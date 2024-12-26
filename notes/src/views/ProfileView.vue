@@ -55,7 +55,8 @@
               max="120"
               placeholder="请输入年龄"
             >
-            <div v-else class="info-text">{{ userInfo.age }} 岁</div>
+            <div v-if="userInfo.age || userInfo.age === 0">{{ userInfo.age }} 岁</div>
+            <div v-else>保密</div>
           </div>
           
           <div class="form-group">
@@ -77,11 +78,11 @@
             <label>个人简介</label>
             <textarea
               v-if="isEditing"
-              v-model="editedInfo.bio"
+              v-model="editedInfo.desc"
               rows="3"
               placeholder="介绍一下自己吧"
             ></textarea>
-            <div v-else class="info-text">{{ userInfo.bio }}</div>
+            <div v-else class="info-text">{{ userInfo.desc }}</div>
           </div>
           
           <div v-if="isEditing" class="action-buttons">
@@ -97,11 +98,10 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useToast } from 'vue-toastification'
 import request from '../utils/request'
 import TheHeader from '../components/TheHeader.vue'
 import TheFooter from '../components/TheFooter.vue'
-
+import { useToast } from 'vue-toastification'
 const toast = useToast()
 const isEditing = ref(false)
 const userInfo = ref({})
@@ -110,13 +110,13 @@ const editedInfo = ref({})
 // 获取用户信息
 const fetchUserInfo = async () => {
   try {
-    const username = localStorage.getItem('username') || '';  // 从本地存储获取用户名
-    const response = await request(`http://localhost:3000/api/users/profile/${username}`);
-    userInfo.value = response.user;
+    const username = localStorage.getItem('username')
+    const response = await request(`/api/users/profile/${username}`)
+    userInfo.value = response.user
   } catch (error) {
-    toast.error('获取用户信息失败');
+    toast.error('获取用户信息失败')
   }
-};
+}
 
 // 开始编辑
 const startEdit = () => {
@@ -133,8 +133,8 @@ const handleCancel = () => {
 // 保存修改
 const handleSave = async () => {
   try {
-    const username = userInfo.value.username;
-    await request(`http://localhost:3000/api/users/profile/${username}`, {
+    const username = userInfo.value.username
+    await request(`/api/users/profile/${username}`, {
       method: 'PUT',
       body: JSON.stringify({
         email: editedInfo.value.email,
@@ -142,15 +142,15 @@ const handleSave = async () => {
         desc: editedInfo.value.desc,
         age: editedInfo.value.age
       })
-    });
+    })
     
-    userInfo.value = { ...editedInfo.value };
-    isEditing.value = false;
-    toast.success('个人信息已更新');
+    userInfo.value = { ...editedInfo.value }
+    isEditing.value = false
+    toast.success('个人信息已更新')
   } catch (error) {
-    toast.error('更新失败');
+    toast.error('更新失败')
   }
-};
+}
 
 // 更新头像
 const handleAvatarChange = async (event) => {
@@ -168,24 +168,24 @@ const handleAvatarChange = async (event) => {
   }
   
   try {
-    const reader = new FileReader();
+    const reader = new FileReader()
     reader.onload = async (e) => {
-      const avatar_url = e.target.result;
-      const username = userInfo.value.username;
+      const avatar_url = e.target.result
+      const username = userInfo.value.username
       
-      await request(`http://localhost:3000/api/users/profile/${username}/avatar`, {
+      await request(`/api/users/profile/${username}/avatar`, {
         method: 'PUT',
         body: JSON.stringify({ avatar_url })
-      });
+      })
       
-      userInfo.value.avatar_url = avatar_url;
-      toast.success('头像已更新');
-    };
-    reader.readAsDataURL(file);
+      userInfo.value.avatar_url = avatar_url
+      toast.success('头像已更新')
+    }
+    reader.readAsDataURL(file)
   } catch (error) {
-    toast.error('头像更新失败');
+    toast.error('头像更新失败')
   }
-};
+}
 
 onMounted(() => {
   fetchUserInfo()

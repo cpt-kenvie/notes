@@ -56,4 +56,68 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// 注册路由
+router.post('/register', async (req, res) => {
+  try {
+    const { username, password, email } = req.body;
+    
+    // 验证用户名是否已存在
+    const [existingUsers] = await pool.execute(
+      'SELECT id FROM users WHERE username = ?',
+      [username]
+    );
+
+    if (existingUsers.length > 0) {
+      return res.status(400).json({ message: '用户名已存在' });
+    }
+
+    // 验证邮箱是否已存在
+    const [existingEmails] = await pool.execute(
+      'SELECT id FROM users WHERE email = ?',
+      [email]
+    );
+
+    if (existingEmails.length > 0) {
+      return res.status(400).json({ message: '邮箱已被使用' });
+    }
+
+    // 密码加密
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // 创建用户，添加 desc 字段的默认值
+    const [result] = await pool.execute(
+      'INSERT INTO users (username, password, email, avatar_url, `desc`) VALUES (?, ?, ?, ?, ?)',
+      [
+        username, 
+        hashedPassword, 
+        email, 
+        'https://robohash.org/kenvie',
+        '这个人很懒，什么都没写~'  // desc 的默认值
+      ]
+    );
+
+    // 生成 token
+    const token = jwt.sign(
+      { userId: result.insertId, username },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    res.status(201).json({
+      message: '注册成功',
+      token,
+      user: {
+        id: result.insertId,
+        username,
+        email,
+        avatar_url: 'https://img.keai.cool/2024/07/1/668a957f2a02f.png',
+        desc: '这个人很懒，什么都没写~'
+      }
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: '服务器错误' });
+  }
+});
+
 module.exports = router; 

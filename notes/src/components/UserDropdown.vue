@@ -2,7 +2,8 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import request from '../utils/request'
-
+import { useToast } from 'vue-toastification'
+const toast = useToast()
 const router = useRouter()
 const isOpen = ref(false)
 const userInfo = ref({
@@ -15,19 +16,22 @@ const userInfo = ref({
 const fetchUserInfo = async () => {
   try {
     const username = localStorage.getItem('username')
-    const response = await request(`http://localhost:3000/api/users/profile/${username}`)
+    const response = await request(`/api/users/profile/${username}`)
     userInfo.value = response.user
   } catch (error) {
     console.error('获取用户信息失败:', error)
+    toast.error('获取用户信息失败:')
   }
 }
 
 // 处理登出
 const handleLogout = () => {
+  toast.success('退出成功')
   localStorage.removeItem('token')
   localStorage.removeItem('isLoggedIn')
   localStorage.removeItem('user')
   localStorage.removeItem('username')
+
   router.push('/login')
 }
 

@@ -5,71 +5,66 @@ import request from '../utils/request'
 import { useToast } from 'vue-toastification'
 const toast = useToast()
 const router = useRouter()
+
 const username = ref('')
 const password = ref('')
-const rememberMe = ref(false)
+const confirmPassword = ref('')
+const email = ref('')
 const isLoading = ref(false)
-const loadSavedCredentials = () => {
-  const savedCredentials = localStorage.getItem('savedCredentials')
-  if (savedCredentials) {
-    const { username: savedUsername, password: savedPassword } = JSON.parse(savedCredentials)
-    username.value = savedUsername
-    password.value = savedPassword
-    rememberMe.value = true
+
+const handleRegister = async () => {
+  // 表单验证
+  if (!username.value || !password.value || !email.value) {
+    toast.error('请填写完整信息')
+    return;
   }
-}
 
-loadSavedCredentials()
+  if (password.value !== confirmPassword.value) {
+    toast.error('两次密码输入不一致')
+    return;
+  }
 
-const handleLogin = async () => {
-  if (!username.value || !password.value) {
-    toast.error('请输入账号和密码')
+  if (password.value.length < 6) {
+    toast.error('密码长度至少6位')
     return;
   }
 
   isLoading.value = true;
   
   try {
-    const response = await request('/api/auth/login', {
+    const response = await request('/api/auth/register', {
       method: 'POST',
       body: JSON.stringify({
         username: username.value,
-        password: password.value
+        password: password.value,
+        email: email.value
       })
     });
-
-    if (rememberMe.value) {
-      localStorage.setItem('savedCredentials', JSON.stringify({
-        username: username.value,
-        password: password.value
-      }));
-    } else {
-      localStorage.removeItem('savedCredentials');
-    }
 
     localStorage.setItem('token', response.token);
     localStorage.setItem('user', JSON.stringify(response.user));
     localStorage.setItem('isLoggedIn', 'true');
     localStorage.setItem('username', response.user.username);
     
-    toast.success('登录成功')
+    toast.success('注册成功')
+    
     setTimeout(() => {
       router.push('/');
     }, 500);
   } catch (error) {
-    toast.error('登录失败')
+    toast.error('注册失败')
   } finally {
     isLoading.value = false;
   }
 };
 
-const goToRegister = () => {
-  router.push('/register');
+const goToLogin = () => {
+  router.push('/login');
 };
 </script>
 
 <template>
-  <div class="login-container">
+  <div class="register-container">
     <a 
       href="https://github.com/cpt-kenvie/notes" 
       target="_blank" 
@@ -81,18 +76,27 @@ const goToRegister = () => {
       </svg>
     </a>
 
-    <div class="login-card">
-      <div class="login-header">
+    <div class="register-card">
+      <div class="register-header">
         <img src="https://img.keai.cool/2024/07/1/668a957f2a02f.png" alt="Logo" class="logo">
-        <h1>欢迎回来</h1>
+        <h1>创建账号</h1>
       </div>
       
-      <form class="login-form" @submit.prevent="handleLogin">
+      <form class="register-form" @submit.prevent="handleRegister">
         <div class="form-group">
           <input
             v-model="username"
             type="text"
-            placeholder="账号"
+            placeholder="用户名"
+            :disabled="isLoading"
+          >
+        </div>
+        
+        <div class="form-group">
+          <input
+            v-model="email"
+            type="email"
+            placeholder="邮箱"
             :disabled="isLoading"
           >
         </div>
@@ -106,36 +110,35 @@ const goToRegister = () => {
           >
         </div>
         
-        <div class="remember-me">
-          <label class="checkbox-label">
-            <input
-              type="checkbox"
-              v-model="rememberMe"
-              :disabled="isLoading"
-            >
-            <span class="checkbox-text">记住密码</span>
-          </label>
+        <div class="form-group">
+          <input
+            v-model="confirmPassword"
+            type="password"
+            placeholder="确认密码"
+            :disabled="isLoading"
+          >
         </div>
         
         <button 
           type="submit"
-          class="login-btn"
+          class="register-btn"
           :disabled="isLoading"
         >
-          {{ isLoading ? '登录中...' : '登录' }}
+          {{ isLoading ? '注册中...' : '注册' }}
         </button>
+        
+        <div class="login-link">
+          已有账号？
+          <a href="#" @click.prevent="goToLogin">去登录</a>
+        </div>
       </form>
-      <div class="register-link">
-        还没有账号？
-        <a href="#" @click.prevent="goToRegister">去注册</a>
-      </div>
     </div>
   </div>
   <MessageToast ref="messageToast" />
 </template>
 
 <style scoped>
-.login-container {
+.register-container {
   min-height: 100vh;
   display: flex;
   justify-content: center;
@@ -144,7 +147,7 @@ const goToRegister = () => {
   padding: 1rem;
 }
 
-.login-card {
+.register-card {
   width: 100%;
   max-width: 400px;
   background: white;
@@ -153,7 +156,7 @@ const goToRegister = () => {
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
 }
 
-.login-header {
+.register-header {
   text-align: center;
   margin-bottom: 2rem;
 }
@@ -161,7 +164,6 @@ const goToRegister = () => {
 .logo {
   height: 48px;
   margin-bottom: 1rem;
-  filter: brightness(0.9);
 }
 
 h1 {
@@ -171,7 +173,7 @@ h1 {
   margin: 0;
 }
 
-.login-form {
+.register-form {
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -202,7 +204,7 @@ input:disabled {
   cursor: not-allowed;
 }
 
-.login-btn {
+.register-btn {
   background-color: var(--primary-color);
   color: white;
   padding: 0.75rem;
@@ -215,129 +217,29 @@ input:disabled {
   margin-top: 1rem;
 }
 
-.login-btn:hover:not(:disabled) {
+.register-btn:hover:not(:disabled) {
   background-color: #1d4ed8;
 }
 
-.login-btn:disabled {
+.register-btn:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }
 
-@media (max-width: 640px) {
-  .login-card {
-    padding: 1.5rem;
-  }
-  
-  .logo {
-    height: 40px;
-  }
-  
-  h1 {
-    font-size: 1.25rem;
-  }
-  
-  input {
-    font-size: 0.875rem;
-  }
-  
-  .login-btn {
-    font-size: 0.875rem;
-  }
-}
-
-.remember-me {
-  margin: 0.75rem 0;
-}
-
-.checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  cursor: pointer;
-  user-select: none;
-}
-
-/* 开关样式 */
-.checkbox-label input[type="checkbox"] {
-  appearance: none;
-  width: 36px;
-  height: 20px;
-  background-color: #e5e7eb;
-  border-radius: 20px;
-  border: none;
-  position: relative;
-  cursor: pointer;
-  transition: all 0.3s;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  align-items: center;
-}
-
-/* 开关滑块 */
-.checkbox-label input[type="checkbox"]::before {
-  content: '';
-  position: absolute;
-  left: 2px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background-color: white;
-  transition: all 0.3s;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-/* 选中状态 */
-.checkbox-label input[type="checkbox"]:checked {
-  background-color: var(--primary-color);
-}
-
-/* 选中状态的滑块位置 */
-.checkbox-label input[type="checkbox"]:checked::before {
-  left: calc(100% - 18px);
-}
-
-/* 悬停效果 */
-.checkbox-label:hover input[type="checkbox"]:not(:checked) {
-  background-color: #d1d5db;
-}
-
-.checkbox-label:hover input[type="checkbox"]:checked {
-  background-color: #1d4ed8;
-}
-
-.checkbox-text {
-  color: #4b5563;
-  font-size: 0.875rem;
-}
-
-/* 禁用状态 */
-.checkbox-label input[type="checkbox"]:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  background-color: #f3f4f6;
-}
-
-.checkbox-label input[type="checkbox"]:disabled + .checkbox-text {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.register-link {
+.login-link {
   text-align: center;
   margin-top: 1rem;
   font-size: 0.875rem;
   color: #6b7280;
 }
 
-.register-link a {
+.login-link a {
   color: var(--primary-color);
   text-decoration: none;
   font-weight: 500;
 }
 
-.register-link a:hover {
+.login-link a:hover {
   text-decoration: underline;
 }
 
@@ -369,6 +271,26 @@ input:disabled {
 }
 
 @media (max-width: 640px) {
+  .register-card {
+    padding: 1.5rem;
+  }
+  
+  .logo {
+    height: 40px;
+  }
+  
+  h1 {
+    font-size: 1.25rem;
+  }
+  
+  input {
+    font-size: 0.875rem;
+  }
+  
+  .register-btn {
+    font-size: 0.875rem;
+  }
+  
   .github-link {
     top: 0.75rem;
     right: 0.75rem;
@@ -380,4 +302,4 @@ input:disabled {
     height: 1.25rem;
   }
 }
-</style> 
+</style>

@@ -10,12 +10,21 @@
     </div>
     <TheFooter />
   </div>
+  <MessageToast ref="messageToast" />
 </template>
 
 <script setup>
 import TheHeader from '../components/TheHeader.vue'
 import TheFooter from '../components/TheFooter.vue'
 import TheSidebar from '../components/TheSidebar.vue'
+import { ref } from 'vue'
+import { useToast } from 'vue-toastification'
+const toast = useToast()
+
+
+const handleError = (error) => {
+  toast.error(error.message || '操作失败')
+}
 </script>
 
 <style scoped>

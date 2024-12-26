@@ -15,13 +15,23 @@
           :key="note.id"
           class="note-item"
           :class="{ active: selectedNoteId === note.id }"
-          @click="handleSelectNote(note)"
         >
-          <h3 class="note-title">{{ note.title }}</h3>
-          <p class="note-preview">{{ note.content }}</p>
-          <div class="note-meta">
-            <span class="note-date">{{ formatDate(note.updated_at) }}</span>
+          <div class="note-content" @click="handleSelectNote(note)">
+            <h3 class="note-title">{{ note.title }}</h3>
+            <p class="note-preview">{{ note.content }}</p>
+            <div class="note-meta">
+              <span class="note-date">{{ formatDate(note.updated_at) }}</span>
+            </div>
           </div>
+          <button 
+            class="delete-btn"
+            @click.stop="handleDeleteNote(note)"
+            title="删除笔记"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+            </svg>
+          </button>
         </div>
       </div>
       
@@ -31,6 +41,8 @@
       </div>
     </div>
   </div>
+  <ConfirmDialog ref="confirmDialog" />
+  <MessageToast ref="messageToast" />
 </template>
 
 <script setup>
@@ -38,16 +50,20 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import request from '../utils/request'
 import eventBus from '../utils/eventBus'
+import { useToast } from 'vue-toastification'
+import ConfirmDialog from './ConfirmDialog.vue'
 
 const router = useRouter()
 const route = useRoute()
 const notes = ref([])
 const selectedNoteId = ref(null)
+const toast = useToast()
+const confirmDialog = ref(null)
 
 // 获取笔记列表
 const fetchNotes = async () => {
   try {
-    const response = await request('http://localhost:3000/api/notes')
+    const response = await request('/api/notes')
     notes.value = response.notes
     // 如果在笔记页面，设置当前选中的笔记
     if (route.name === 'note') {
@@ -55,6 +71,7 @@ const fetchNotes = async () => {
     }
   } catch (error) {
     console.error('获取笔记列表失败:', error)
+    toast.error('获取笔记列表失败')
   }
 }
 
@@ -92,6 +109,37 @@ const handleSelectNote = (note) => {
 // 新建笔记
 const handleNewNote = () => {
   router.push('/notes/new')
+}
+
+// 删除笔记
+const handleDeleteNote = async (note) => {
+  const confirmed = await confirmDialog.value?.show({
+    title: '删除笔记',
+    message: '确定要删除这篇笔记吗？此操作不可恢复。',
+    confirmText: '删除',
+    cancelText: '取消',
+    type: 'danger'
+  })
+
+  if (!confirmed) return
+
+  try {
+    await request(`/api/notes/${note.id}`, {
+      method: 'DELETE'
+    })
+    
+    toast.success('笔记已删除')
+    
+    // 如果当前正在查看被删除的笔记，返回首页
+    if (route.params.id === note.id.toString()) {
+      router.push('/')
+    }
+    
+    // 刷新笔记列表
+    fetchNotes()
+  } catch (error) {
+    toast.error('删除失败')
+  }
 }
 </script>
 
@@ -151,11 +199,14 @@ h2 {
 }
 
 .note-item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
   padding: 1rem;
   background-color: white;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
-  cursor: pointer;
   transition: all 0.3s;
 }
 
@@ -170,6 +221,45 @@ h2 {
   background-color: #eff6ff;
 }
 
+.note-content {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.delete-btn {
+  opacity: 0;
+  padding: 0.5rem;
+  margin: -0.5rem;
+  background: none;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  transition: all 0.3s;
+  border-radius: 6px;
+  align-self: flex-start;
+}
+
+.delete-btn:hover {
+  background-color: #fee2e2;
+}
+
+.note-item:hover .delete-btn {
+  opacity: 1;
+}
+
+.icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* 在移动设备上始终显示删除按钮 */
+@media (max-width: 640px) {
+  .delete-btn {
+    opacity: 1;
+  }
+}
+
 .note-title {
   font-size: 1rem;
   font-weight: 500;
@@ -182,7 +272,6 @@ h2 {
   color: #6b7280;
   margin-bottom: 0.75rem;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
