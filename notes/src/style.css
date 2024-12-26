@@ -1,0 +1,55 @@
+:root {
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-weight-normal: 500;
+  --font-weight-bold: 700;
+}
+
+* {
+  font-family: var(--font-mono);
+  font-weight: var(--font-weight-normal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 标题使用更粗的字重 */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: var(--font-weight-bold);
+}
+
+/* 确保代码块使用相同字体和字重 */
+code, pre {
+  font-family: var(--font-mono) !important;
+  font-weight: var(--font-weight-normal) !important;
+}
+
+/* 编辑器内容也使用相同字体和字重 */
+.bytemd-editor {
+  font-family: var(--font-mono) !important;
+  font-weight: var(--font-weight-normal) !important;
+}
+
+.markdown-body {
+  font-family: var(--font-mono) !important;
+  font-weight: var(--font-weight-normal) !important;
+}
+
+/* 输入框使用相同字体和字重 */
+input, textarea, button {
+  font-family: var(--font-mono) !important;
+  font-weight: var(--font-weight-normal) !important;
+}
+
+/* 强调文本使用粗体 */
+strong, b {
+  font-weight: var(--font-weight-bold) !important;
+}
+
+/* 导航和按钮文本使用中等字重 */
+.nav-item, .button {
+  font-weight: var(--font-weight-normal);
+}
+
+/* 特殊强调文本使用粗体 */
+.emphasis {
+  font-weight: var(--font-weight-bold);
+}

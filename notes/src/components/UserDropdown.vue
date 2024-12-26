@@ -1,114 +1,117 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import { useToast } from 'vue-toastification'
-import ConfirmDialog from './ConfirmDialog.vue'
+import { useRouter } from 'vue-router'
+import request from '../utils/request'
 
-const toast = useToast()
+const router = useRouter()
 const isOpen = ref(false)
-const confirmDialog = ref(null)
-const emit = defineEmits(['logout'])
-
-const user = ref({
-  name: 'Kenvie',
-  avatar: 'https://q1.qlogo.cn/g?b=qq&nk=7097341&s=100',
-  email: 'kenvie@example.com',
-  bio: '热爱生活，热爱编程'
+const userInfo = ref({
+  username: '',
+  email: '',
+  avatar_url: ''
 })
 
-const handleLogout = async () => {
-  const confirmed = await confirmDialog.value.show({
-    title: '退出登录',
-    message: '确定要退出当前账号吗？\n退出后需要重新登录',
-    confirmText: '退出',
-    cancelText: '取消',
-    type: 'warning'
-  })
-  
-  if (confirmed) {
-    localStorage.removeItem('isLoggedIn')
-    emit('logout')
-    toast.success('已退出登录')
+// 获取用户信息
+const fetchUserInfo = async () => {
+  try {
+    const username = localStorage.getItem('username')
+    const response = await request(`http://localhost:3000/api/users/profile/${username}`)
+    userInfo.value = response.user
+  } catch (error) {
+    console.error('获取用户信息失败:', error)
   }
 }
 
-const closeDropdown = () => {
+// 处理登出
+const handleLogout = () => {
+  localStorage.removeItem('token')
+  localStorage.removeItem('isLoggedIn')
+  localStorage.removeItem('user')
+  localStorage.removeItem('username')
+  router.push('/login')
+}
+
+// 跳转到个人资料页
+const goToProfile = () => {
+  router.push('/profile')
   isOpen.value = false
 }
 
-// 点击外部关闭下拉菜单
+// 添加点击外部关闭下拉菜单的处理
 const handleClickOutside = (event) => {
-  const dropdown = document.querySelector('.user-dropdown')
+  const dropdown = document.querySelector('.dropdown')
   if (dropdown && !dropdown.contains(event.target)) {
-    closeDropdown()
+    isOpen.value = false
   }
 }
 
 onMounted(() => {
+  fetchUserInfo()
+  // 添加点击事件监听
   document.addEventListener('click', handleClickOutside)
 })
 
 onUnmounted(() => {
+  // 移除事件监听
   document.removeEventListener('click', handleClickOutside)
 })
 </script>
 
 <template>
-  <div class="user-dropdown">
-    <ConfirmDialog ref="confirmDialog" />
+  <div class="dropdown">
     <div 
-      class="user-trigger"
+      class="user-info"
       @click.stop="isOpen = !isOpen"
     >
-      <img :src="user.avatar" :alt="user.name" class="avatar" />
-      <span class="username">{{ user.name }}</span>
+      <img 
+        :src="userInfo.avatar_url || 'https://img.keai.cool/2024/07/1/668a957f2a02f.png'" 
+        :alt="userInfo.username"
+        class="avatar"
+      />
+      <span class="username">{{ userInfo.username }}</span>
     </div>
     
-    <transition
-      enter-active-class="transition duration-200 ease-out"
-      enter-from-class="transform scale-95 opacity-0"
-      enter-to-class="transform scale-100 opacity-100"
-      leave-active-class="transition duration-200 ease-in"
-      leave-from-class="transform scale-100 opacity-100"
-      leave-to-class="transform scale-95 opacity-0"
+    <div 
+      v-if="isOpen"
+      class="dropdown-menu"
     >
-      <div v-if="isOpen" class="dropdown-menu">
-        <div class="menu-header">
-          <img :src="user.avatar" :alt="user.name" class="menu-avatar" />
-          <div class="user-info">
-            <div class="user-name">{{ user.name }}</div>
-            <div class="user-email">{{ user.email }}</div>
-          </div>
+      <div class="menu-header">
+        <img 
+          :src="userInfo.avatar_url || 'https://img.keai.cool/2024/07/1/668a957f2a02f.png'" 
+          :alt="userInfo.username"
+          class="menu-avatar"
+        />
+        <div class="user-details">
+          <div class="menu-username">{{ userInfo.username }}</div>
+          <div class="menu-email">{{ userInfo.email }}</div>
         </div>
-        
-        <div class="menu-divider"></div>
-        
-        <router-link to="/profile" class="menu-item" @click="closeDropdown">
-          <i class="fas fa-user"></i>
-          个人信息
-        </router-link>
-        
-        <router-link to="/settings" class="menu-item" @click="closeDropdown">
-          <i class="fas fa-cog"></i>
-          系统设置
-        </router-link>
-        
-        <div class="menu-divider"></div>
-        
-        <button class="menu-item text-red" @click="handleLogout">
-          <i class="fas fa-sign-out-alt"></i>
-          退出登录
-        </button>
       </div>
-    </transition>
+      
+      <div class="menu-divider"></div>
+      
+      <button 
+        class="menu-item"
+        @click="goToProfile"
+      >
+        个人资料
+      </button>
+      
+      <button 
+        class="menu-item logout"
+        @click="handleLogout"
+      >
+        退出登录
+      </button>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.user-dropdown {
+.dropdown {
   position: relative;
 }
 
-.user-trigger {
+.user-info {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -119,7 +122,7 @@ onUnmounted(() => {
   transition: background-color 0.3s ease;
 }
 
-.user-trigger:hover {
+.user-info:hover {
   background-color: #e2e8f0;
 }
 
@@ -133,22 +136,23 @@ onUnmounted(() => {
 .username {
   font-size: 0.875rem;
   font-weight: 500;
+  color: #1f2937;
 }
 
 .dropdown-menu {
   position: absolute;
   top: calc(100% + 0.5rem);
   right: 0;
-  width: 280px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  width: 240px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
   overflow: hidden;
   z-index: 50;
 }
 
 .menu-header {
-  padding: 1.5rem;
+  padding: 1rem;
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -156,26 +160,26 @@ onUnmounted(() => {
 }
 
 .menu-avatar {
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   object-fit: cover;
 }
 
-.user-info {
+.user-details {
   flex: 1;
   min-width: 0;
 }
 
-.user-name {
-  font-weight: 600;
+.menu-username {
+  font-weight: 500;
   color: #1f2937;
   margin-bottom: 0.25rem;
 }
 
-.user-email {
+.menu-email {
   font-size: 0.875rem;
-  color: #64748b;
+  color: #6b7280;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -183,43 +187,32 @@ onUnmounted(() => {
 
 .menu-divider {
   height: 1px;
-  background-color: #e2e8f0;
+  background-color: #e5e7eb;
   margin: 0.5rem 0;
 }
 
 .menu-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  color: #4b5563;
-  text-decoration: none;
-  transition: all 0.2s;
-  cursor: pointer;
-  border: none;
-  background: none;
   width: 100%;
+  padding: 0.75rem 1rem;
   text-align: left;
+  background: none;
+  border: none;
   font-size: 0.875rem;
+  color: #1f2937;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
 .menu-item:hover {
-  background-color: #f8fafc;
-  color: var(--primary-color);
+  background-color: #f1f5f9;
 }
 
-.menu-item i {
-  font-size: 1rem;
-  opacity: 0.7;
+.menu-item.logout {
+  color: #ef4444;
 }
 
-.text-red {
-  color: #ef4444 !important;
-}
-
-.text-red:hover {
-  background-color: #fef2f2 !important;
-  color: #dc2626 !important;
+.menu-item.logout:hover {
+  background-color: #fef2f2;
 }
 
 @media (max-width: 640px) {
@@ -228,7 +221,7 @@ onUnmounted(() => {
   }
   
   .dropdown-menu {
-    width: 250px;
+    width: 200px;
   }
 }
 </style> 
