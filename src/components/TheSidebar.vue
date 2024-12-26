@@ -29,7 +29,8 @@ const handleDelete = async (event, note) => {
     title: '删除笔记',
     message: `确定要删除笔记"${note.title}"吗？\n创建时间：${note.updatedAt}\n此操作不可恢复`,
     confirmText: '删除',
-    cancelText: '取消'
+    cancelText: '取消',
+    type: 'danger'
   })
   
   if (confirmed) {

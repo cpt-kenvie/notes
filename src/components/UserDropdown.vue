@@ -18,9 +18,10 @@ const user = ref({
 const handleLogout = async () => {
   const confirmed = await confirmDialog.value.show({
     title: '退出登录',
-    message: '确定要退出登录吗？',
+    message: '确定要退出当前账号吗？\n退出后需要重新登录',
     confirmText: '退出',
-    cancelText: '取消'
+    cancelText: '取消',
+    type: 'warning'
   })
   
   if (confirmed) {

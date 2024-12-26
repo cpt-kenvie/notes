@@ -2,28 +2,21 @@
 import { ref } from 'vue'
 
 const isVisible = ref(false)
-let resolvePromise = null
-
-const props = defineProps({
-  title: {
-    type: String,
-    default: '⚠️确认'
-  },
-  message: {
-    type: String,
-    required: true
-  },
-  confirmText: {
-    type: String,
-    default: '确定'
-  },
-  cancelText: {
-    type: String,
-    default: '取消'
-  }
+const dialogConfig = ref({
+  title: '⚠️确认',
+  message: '',
+  confirmText: '确定',
+  cancelText: '取消',
+  type: 'default' // 可以是 'default', 'warning', 'danger'
 })
 
-const show = () => {
+let resolvePromise = null
+
+const show = (config) => {
+  dialogConfig.value = {
+    ...dialogConfig.value,
+    ...config
+  }
   isVisible.value = true
   return new Promise(resolve => {
     resolvePromise = resolve
@@ -58,25 +51,30 @@ defineExpose({ show })
         <div class="dialog-container">
           <div class="dialog-content">
             <div class="dialog-header">
-              <h3 class="dialog-title">{{ title }}</h3>
+              <h3 class="dialog-title">{{ dialogConfig.title }}</h3>
               <button class="close-btn" @click="handleCancel">×</button>
             </div>
             <div class="dialog-body">
-              <div class="warning-icon">确认删除？</div>
-              <p class="dialog-message" style="white-space: pre-line">{{ message }}</p>
+              <div class="warning-icon" :class="dialogConfig.type">
+                {{ dialogConfig.type === 'danger' ? '删除确认？' : '确认操作？' }}
+              </div>
+              <p class="dialog-message" style="white-space: pre-line">{{ dialogConfig.message }}</p>
             </div>
             <div class="dialog-actions">
               <button 
                 class="dialog-btn dialog-btn-cancel" 
                 @click="handleCancel"
               >
-                {{ cancelText }}
+                {{ dialogConfig.cancelText }}
               </button>
               <button 
-                class="dialog-btn dialog-btn-confirm" 
+                class="dialog-btn" 
+                :class="[
+                  dialogConfig.type === 'danger' ? 'dialog-btn-danger' : 'dialog-btn-confirm'
+                ]"
                 @click="handleConfirm"
               >
-                {{ confirmText }}
+                {{ dialogConfig.confirmText }}
               </button>
             </div>
           </div>
@@ -201,8 +199,27 @@ defineExpose({ show })
 }
 
 .warning-icon {
-  font-size: 1.5rem;
-  flex-shrink: 0;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #4b5563;
+}
+
+.warning-icon.danger {
+  color: #ef4444;
+}
+
+.warning-icon.warning {
+  color: #f59e0b;
+}
+
+.dialog-btn-danger {
+  background-color: #ef4444;
+  color: white;
+  border: none;
+}
+
+.dialog-btn-danger:hover {
+  background-color: #dc2626;
 }
 
 .dialog-message {
