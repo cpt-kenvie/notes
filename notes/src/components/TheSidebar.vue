@@ -42,7 +42,6 @@
     </div>
   </div>
   <ConfirmDialog ref="confirmDialog" />
-  <MessageToast ref="messageToast" />
 </template>
 
 <script setup>
@@ -130,7 +129,7 @@ const handleDeleteNote = async (note) => {
     
     toast.success('笔记已删除')
     
-    // 如果当前正在查看被删除的笔记，返回首页
+    // 如果当前正在查看���删除的笔记，返回首页
     if (route.params.id === note.id.toString()) {
       router.push('/')
     }
@@ -145,17 +144,25 @@ const handleDeleteNote = async (note) => {
 
 <style scoped>
 .sidebar {
-  width: 300px;
-  border-right: 1px solid #e5e7eb;
-  background-color: #f9fafb;
-  height: 100%;
+  width: var(--sidebar-width);
+  height: 100vh;
+  background-color: #f8fafc;
+  border-right: 1px solid #e2e8f0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 40;
   display: flex;
   flex-direction: column;
+  padding-top: var(--header-height);
+  transition: all 0.3s ease;
 }
 
+/* 固定的头部区域样式 */
 .sidebar-header {
-  padding: 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
+  padding: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  background-color: #f8fafc;
 }
 
 h2 {
@@ -186,10 +193,35 @@ h2 {
   background-color: #1d4ed8;
 }
 
+/* 可滚动区域样式 */
 .notes-list {
   flex: 1;
   overflow-y: auto;
   padding: 1rem;
+  /* 添加平滑滚动 */
+  scroll-behavior: smooth;
+  /* 隐藏滚动条但保持功能 */
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db transparent;
+}
+
+/* Webkit 浏览器的滚动条样式 */
+.notes-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.notes-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.notes-list::-webkit-scrollbar-thumb {
+  background-color: #d1d5db;
+  border-radius: 3px;
+  border: 2px solid transparent;
+}
+
+.notes-list::-webkit-scrollbar-thumb:hover {
+  background-color: #9ca3af;
 }
 
 .notes-grid {
@@ -207,7 +239,7 @@ h2 {
   background-color: white;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
-  transition: all 0.3s;
+  transition: all 0.3s ease;
 }
 
 .note-item:hover {
@@ -293,21 +325,23 @@ h2 {
   color: #6b7280;
 }
 
-/* 滚动条样式 */
-.notes-list::-webkit-scrollbar {
-  width: 6px;
-}
-
-.notes-list::-webkit-scrollbar-track {
-  background: #f1f1f1;
-}
-
-.notes-list::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 3px;
-}
-
-.notes-list::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
+@media (max-width: 768px) {
+  .sidebar {
+    width: 40px;
+    overflow: hidden;
+  }
+  
+  .sidebar:hover {
+    width: var(--sidebar-width);
+    box-shadow: 4px 0 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .notes-list {
+    padding: 0.75rem;
+  }
+  
+  .note-item {
+    padding: 0.75rem;
+  }
 }
 </style> 

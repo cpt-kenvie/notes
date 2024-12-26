@@ -134,7 +134,6 @@ const goToLogin = () => {
       </form>
     </div>
   </div>
-  <MessageToast ref="messageToast" />
 </template>
 
 <style scoped>

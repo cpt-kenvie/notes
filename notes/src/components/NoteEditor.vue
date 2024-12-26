@@ -98,13 +98,11 @@ const handleChange = (v) => {
 // 保存笔记
 const saveNote = () => {
   if (!title.value.trim()) {
-    // messageToast.value?.show('请输入笔记标题', 'warning')
     toast.error('请输入笔记标题')
     return
   }
   
   if (!content.value.trim()) {
-    // messageToast.value?.show('请输入笔记内容', 'warning')
     toast.error('请输入笔记内容')
     return
   }
@@ -118,10 +116,9 @@ const saveNote = () => {
 const handleImageUpload = async (files) => {
   try {
     // ... 上传代码
-    messageToast.value?.show('图片上传成功', 'success')
-    toast.success('请输入笔记内容')
+    toast.success('图片上传成功')
   } catch (error) {
-    messageToast.value?.show('图片上传失败', 'error')
+    toast.error('图片上传失败')
   }
 }
 </script>
@@ -153,7 +150,7 @@ const handleImageUpload = async (files) => {
       />
     </div>
   </div>
-  <MessageToast ref="messageToast" />
+
 </template>
 
 <style>

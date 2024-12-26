@@ -10,7 +10,6 @@
     </div>
     <TheFooter />
   </div>
-  <MessageToast ref="messageToast" />
 </template>
 
 <script setup>

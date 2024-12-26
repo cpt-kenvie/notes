@@ -131,7 +131,6 @@ const goToRegister = () => {
       </div>
     </div>
   </div>
-  <MessageToast ref="messageToast" />
 </template>
 
 <style scoped>
