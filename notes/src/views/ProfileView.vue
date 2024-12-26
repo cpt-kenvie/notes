@@ -7,7 +7,7 @@
         <button 
           v-if="!isEditing"
           class="edit-btn"
-          @click="isEditing = true"
+          @click="startEdit"
         >
           编辑资料
         </button>
@@ -15,7 +15,7 @@
       
       <div class="profile-content">
         <div class="avatar-section">
-          <img :src="user.avatar" :alt="user.name" class="profile-avatar" />
+          <img :src="userInfo.avatar_url" :alt="userInfo.username" class="profile-avatar" />
           <div v-if="isEditing" class="avatar-upload">
             <input
               type="file"
@@ -31,50 +31,44 @@
         <div class="info-section">
           <div class="form-group">
             <label>用户名</label>
-            <input
-              v-if="isEditing"
-              v-model="editedUser.name"
-              type="text"
-              placeholder="请输入用户名"
-            >
-            <div v-else class="info-text">{{ user.name }}</div>
+            <div class="info-text">{{ userInfo.username }}</div>
           </div>
           
           <div class="form-group">
             <label>邮箱</label>
             <input
               v-if="isEditing"
-              v-model="editedUser.email"
+              v-model="editedInfo.email"
               type="email"
               placeholder="请输入邮箱"
             >
-            <div v-else class="info-text">{{ user.email }}</div>
+            <div v-else class="info-text">{{ userInfo.email }}</div>
           </div>
           
           <div class="form-group">
             <label>年龄</label>
             <input
               v-if="isEditing"
-              v-model.number="editedUser.age"
+              v-model.number="editedInfo.age"
               type="number"
               min="1"
               max="120"
               placeholder="请输入年龄"
             >
-            <div v-else class="info-text">{{ user.age }} 岁</div>
+            <div v-else class="info-text">{{ userInfo.age }} 岁</div>
           </div>
           
           <div class="form-group">
             <label>个人网站</label>
             <input
               v-if="isEditing"
-              v-model="editedUser.website"
+              v-model="editedInfo.website"
               type="url"
               placeholder="请输入网址"
             >
             <div v-else class="info-text">
-              <a :href="user.website" target="_blank" class="website-link">
-                {{ user.website }}
+              <a :href="userInfo.website" target="_blank" class="website-link">
+                {{ userInfo.website }}
               </a>
             </div>
           </div>
@@ -83,55 +77,11 @@
             <label>个人简介</label>
             <textarea
               v-if="isEditing"
-              v-model="editedUser.bio"
+              v-model="editedInfo.bio"
               rows="3"
               placeholder="介绍一下自己吧"
             ></textarea>
-            <div v-else class="info-text">{{ user.bio }}</div>
-          </div>
-          
-          <div class="form-group">
-            <label>个人标签</label>
-            <div v-if="isEditing" class="tags-editor">
-              <div class="tags-list">
-                <span 
-                  v-for="tag in editedUser.tags" 
-                  :key="tag"
-                  class="tag"
-                >
-                  {{ tag }}
-                  <button 
-                    class="remove-tag"
-                    @click="handleRemoveTag(tag)"
-                  >
-                    ×
-                  </button>
-                </span>
-              </div>
-              <div class="add-tag">
-                <input
-                  v-model="newTag"
-                  type="text"
-                  placeholder="添加标签"
-                  @keyup.enter="handleAddTag"
-                >
-                <button 
-                  class="add-tag-btn"
-                  @click="handleAddTag"
-                >
-                  添加
-                </button>
-              </div>
-            </div>
-            <div v-else class="tags-list">
-              <span 
-                v-for="tag in user.tags" 
-                :key="tag"
-                class="tag"
-              >
-                {{ tag }}
-              </span>
-            </div>
+            <div v-else class="info-text">{{ userInfo.bio }}</div>
           </div>
           
           <div v-if="isEditing" class="action-buttons">
@@ -146,61 +96,67 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useToast } from 'vue-toastification'
+import request from '../utils/request'
 import TheHeader from '../components/TheHeader.vue'
 import TheFooter from '../components/TheFooter.vue'
 
 const toast = useToast()
-
-const user = ref({
-  name: 'Kenvie',
-  avatar: 'https://q1.qlogo.cn/g?b=qq&nk=7097341&s=100',
-  email: 'kenvie@example.com',
-  age: 25,
-  website: 'https://keai.cool',
-  bio: '热爱生活，热爱编程',
-  tags: ['Vue.js', '前端开发', '设计', '摄影']
-})
-
 const isEditing = ref(false)
-const editedUser = ref({ ...user.value })
-const newTag = ref('')
+const userInfo = ref({})
+const editedInfo = ref({})
 
-const handleSave = () => {
-  // 验证网址格式
-  if (editedUser.value.website && !isValidUrl(editedUser.value.website)) {
-    toast.error('请输入有效的网址')
-    return
+// 获取用户信息
+const fetchUserInfo = async () => {
+  try {
+    const username = localStorage.getItem('username') || '';  // 从本地存储获取用户名
+    const response = await request(`http://localhost:3000/api/users/profile/${username}`);
+    userInfo.value = response.user;
+  } catch (error) {
+    toast.error('获取用户信息失败');
   }
-  
-  user.value = { ...editedUser.value }
-  isEditing.value = false
-  toast.success('个人信息已更新')
+};
+
+// 开始编辑
+const startEdit = () => {
+  editedInfo.value = { ...userInfo.value }
+  isEditing.value = true
 }
 
+// 取消编辑
 const handleCancel = () => {
-  editedUser.value = { ...user.value }
   isEditing.value = false
+  editedInfo.value = { ...userInfo.value }
 }
 
-const handleAddTag = () => {
-  if (!newTag.value) return
-  if (!editedUser.value.tags.includes(newTag.value)) {
-    editedUser.value.tags.push(newTag.value)
+// 保存修改
+const handleSave = async () => {
+  try {
+    const username = userInfo.value.username;
+    await request(`http://localhost:3000/api/users/profile/${username}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        email: editedInfo.value.email,
+        website: editedInfo.value.website,
+        desc: editedInfo.value.desc,
+        age: editedInfo.value.age
+      })
+    });
+    
+    userInfo.value = { ...editedInfo.value };
+    isEditing.value = false;
+    toast.success('个人信息已更新');
+  } catch (error) {
+    toast.error('更新失败');
   }
-  newTag.value = ''
-}
+};
 
-const handleRemoveTag = (tag) => {
-  editedUser.value.tags = editedUser.value.tags.filter(t => t !== tag)
-}
-
-const handleAvatarChange = (event) => {
+// 更新头像
+const handleAvatarChange = async (event) => {
   const file = event.target.files[0]
   if (!file) return
   
-  // 验证文件类型和大小
   if (!file.type.startsWith('image/')) {
     toast.error('请选择图片文件')
     return
@@ -211,22 +167,29 @@ const handleAvatarChange = (event) => {
     return
   }
   
-  // 创建预览
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    editedUser.value.avatar = e.target.result
-  }
-  reader.readAsDataURL(file)
-}
-
-const isValidUrl = (string) => {
   try {
-    new URL(string)
-    return true
-  } catch (_) {
-    return false
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const avatar_url = e.target.result;
+      const username = userInfo.value.username;
+      
+      await request(`http://localhost:3000/api/users/profile/${username}/avatar`, {
+        method: 'PUT',
+        body: JSON.stringify({ avatar_url })
+      });
+      
+      userInfo.value.avatar_url = avatar_url;
+      toast.success('头像已更新');
+    };
+    reader.readAsDataURL(file);
+  } catch (error) {
+    toast.error('头像更新失败');
   }
-}
+};
+
+onMounted(() => {
+  fetchUserInfo()
+})
 </script>
 
 <style scoped>

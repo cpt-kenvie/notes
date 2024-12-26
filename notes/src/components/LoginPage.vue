@@ -24,35 +24,67 @@ const loadSavedCredentials = () => {
 
 loadSavedCredentials()
 
-const handleLogin = () => {
+const handleLogin = async () => {
   if (!username.value || !password.value) {
-    toast.error('请输入账号和密码')
-    return
+    toast.error('请输入账号和密码');
+    return;
   }
 
-  isLoading.value = true
+  isLoading.value = true;
   
-  // 模拟登录请求
-  setTimeout(() => {
-    if (username.value === 'Kenvie' && password.value === 'S7865324.') {
-      if (rememberMe.value) {
-        localStorage.setItem('savedCredentials', JSON.stringify({
-          username: username.value,
-          password: password.value
-        }))
-      } else {
-        localStorage.removeItem('savedCredentials')
-      }
-      
-      toast.success('登录成功')
-      localStorage.setItem('isLoggedIn', 'true')
-      router.push('/')
-    } else {
-      toast.error('账号或密码错误')
+  try {
+    const response = await fetch('http://localhost:3000/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        username: username.value,
+        password: password.value
+      })
+    });
+
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.message);
     }
-    isLoading.value = false
-  }, 800)
-}
+
+    if (rememberMe.value) {
+      localStorage.setItem('savedCredentials', JSON.stringify({
+        username: username.value,
+        password: password.value
+      }));
+    } else {
+      localStorage.removeItem('savedCredentials');
+    }
+
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('user', JSON.stringify(data.user));
+    
+    // 先设置登录状态
+    localStorage.setItem('isLoggedIn', 'true');
+    
+    // 发出登录成功事件
+    emit('login-success');
+    
+    // 显示提示
+    toast.success('登录成功');
+    
+    // 确保在提示显示后再跳转
+    setTimeout(() => {
+      router.push('/');
+    }, 500);
+
+    // 在登录成功后保存用户名
+    localStorage.setItem('username', data.user.username);
+
+  } catch (error) {
+    toast.error(error.message || '登录失败');
+  } finally {
+    isLoading.value = false;
+  }
+};
 </script>
 
 <template>

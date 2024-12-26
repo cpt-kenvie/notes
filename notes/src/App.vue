@@ -28,7 +28,7 @@ createApp({}).use(Toast, toastOptions)
 
 <style>
 /* 引入 JetBrains Mono 字体 */
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('./assets/css/Mono.css');
 
 /* 全局样式 */
 :root {

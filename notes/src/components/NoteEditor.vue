@@ -76,49 +76,31 @@ const props = defineProps({
   note: {
     type: Object,
     required: true
-  },
-  isSidebarOpen: {
-    type: Boolean,
-    default: true
   }
 })
 
-const content = ref(props.note.content)
-const title = ref(props.note.title)
+const emit = defineEmits(['save'])
 
-const toast = useToast()
+const content = ref('')
+const title = ref('')
 
-// 监听笔记变化
+// 监听笔记变化，更新编辑器内容
 watch(() => props.note, (newNote) => {
-  content.value = newNote.content
-  title.value = newNote.title
-}, { deep: true })
-
-// 保存笔记
-const saveNote = () => {
-  const notes = JSON.parse(localStorage.getItem('notes') || '[]')
-  const index = notes.findIndex(n => n.id === props.note.id)
-  
-  const updatedNote = {
-    ...props.note,
-    title: title.value,
-    content: content.value,
-    updatedAt: new Date().toISOString().split('T')[0]
-  }
-  
-  if (index > -1) {
-    notes[index] = updatedNote
-  } else {
-    notes.push(updatedNote)
-  }
-  
-  localStorage.setItem('notes', JSON.stringify(notes))
-  toast.success("笔记已保存")
-}
+  content.value = newNote.content || ''
+  title.value = newNote.title || ''
+}, { immediate: true, deep: true })
 
 // 编辑器内容变化处理
 const handleChange = (v) => {
   content.value = v
+}
+
+// 保存笔记
+const saveNote = () => {
+  emit('save', {
+    title: title.value,
+    content: content.value
+  })
 }
 </script>
 
@@ -146,10 +128,6 @@ const handleChange = (v) => {
         :plugins="plugins"
         :locale="locale"
         @change="handleChange"
-        :uploadImages="async (files) => {
-          // 这里可以实现图片上传功能
-          return []
-        }"
       />
     </div>
   </div>
