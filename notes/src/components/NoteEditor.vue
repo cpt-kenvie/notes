@@ -150,7 +150,6 @@ const handleImageUpload = async (files) => {
       />
     </div>
   </div>
-
 </template>
 
 <style>
